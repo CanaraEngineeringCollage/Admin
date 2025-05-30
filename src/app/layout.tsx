@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Campus Central',
-  description: 'Admin dashboard for Campus Central',
+  title: 'Canara Engineering College',
+  description: 'Admin dashboard for Canara Engineering College',
 };
 
 export default function RootLayout({
