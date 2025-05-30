@@ -35,6 +35,9 @@ import {
 
 const employmentTypes: Faculty['employmentType'][] = ['Regular', 'Contract', 'Visiting'];
 
+const ALL_DEPARTMENTS_VALUE = "_ALL_DEPARTMENTS_";
+const ALL_EMPLOYMENT_TYPES_VALUE = "_ALL_EMPLOYMENT_TYPES_";
+
 export default function FacultyPage() {
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [filteredFaculties, setFilteredFaculties] = useState<Faculty[]>([]);
@@ -183,12 +186,17 @@ export default function FacultyPage() {
           </div>
           <div>
             <Label htmlFor="departmentFilter" className="text-sm font-medium">Department</Label>
-            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+            <Select
+              value={selectedDepartment || ALL_DEPARTMENTS_VALUE}
+              onValueChange={(value) => {
+                setSelectedDepartment(value === ALL_DEPARTMENTS_VALUE ? '' : value);
+              }}
+            >
               <SelectTrigger id="departmentFilter" className="mt-1">
                 <SelectValue placeholder="All Departments" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Departments</SelectItem>
+                <SelectItem value={ALL_DEPARTMENTS_VALUE}>All Departments</SelectItem>
                 {uniqueDepartments.map(dept => (
                   <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                 ))}
@@ -197,12 +205,17 @@ export default function FacultyPage() {
           </div>
           <div>
             <Label htmlFor="employmentTypeFilter" className="text-sm font-medium">Employment Type</Label>
-            <Select value={selectedEmploymentType} onValueChange={(value) => setSelectedEmploymentType(value as Faculty['employmentType'] | '')}>
+            <Select
+              value={selectedEmploymentType || ALL_EMPLOYMENT_TYPES_VALUE}
+              onValueChange={(value) => {
+                setSelectedEmploymentType(value === ALL_EMPLOYMENT_TYPES_VALUE ? '' : value as Faculty['employmentType'] | '');
+              }}
+            >
               <SelectTrigger id="employmentTypeFilter" className="mt-1">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value={ALL_EMPLOYMENT_TYPES_VALUE}>All Types</SelectItem>
                 {employmentTypes.map(type => (
                   <SelectItem key={type} value={type}>{type}</SelectItem>
                 ))}
