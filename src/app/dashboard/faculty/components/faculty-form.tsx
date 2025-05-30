@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Control, UseFieldArrayAppend, UseFieldArrayRemove, UseFormReturn } from 'react-hook-form';
@@ -79,7 +80,14 @@ function QualificationsFields({ control, append, remove }: {
               <FormItem className="lg:col-span-1">
                 <FormLabel>Passing Year</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., 1996" {...field} type="number" />
+                  <Input 
+                    placeholder="e.g., 1996" 
+                    {...field} 
+                    type="text" 
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
