@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -10,7 +11,16 @@ import { PageTitle } from '@/components/page-title';
 import { Button } from '@/components/ui/button';
 import { FacultyTable } from './components/faculty-table';
 import { FacultyForm } from './components/faculty-form';
-import { PlusCircle, UsersRound } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { PlusCircle, UsersRound, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -23,11 +33,19 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+const employmentTypes: Faculty['employmentType'][] = ['Regular', 'Contract', 'Visiting'];
+
 export default function FacultyPage() {
   const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [filteredFaculties, setFilteredFaculties] = useState<Faculty[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingFaculty, setEditingFaculty] = useState<Faculty | null>(null);
   const [facultyToDelete, setFacultyToDelete] = useState<string | null>(null);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedEmploymentType, setSelectedEmploymentType] = useState<Faculty['employmentType'] | ''>('');
+  const [uniqueDepartments, setUniqueDepartments] = useState<string[]>([]);
 
   const { toast } = useToast();
 
@@ -45,14 +63,41 @@ export default function FacultyPage() {
     },
   });
 
- useEffect(() => {
+  useEffect(() => {
     // Simulate fetching data
     setFaculties(initialFaculties);
   }, []);
 
+  useEffect(() => {
+    const departments = Array.from(new Set(faculties.map(f => f.department)));
+    setUniqueDepartments(departments.sort());
+  }, [faculties]);
+
+  useEffect(() => {
+    let items = [...faculties];
+
+    if (selectedDepartment) {
+      items = items.filter(f => f.department === selectedDepartment);
+    }
+
+    if (selectedEmploymentType) {
+      items = items.filter(f => f.employmentType === selectedEmploymentType);
+    }
+
+    if (searchTerm) {
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      items = items.filter(f =>
+        f.name.toLowerCase().includes(lowerSearchTerm) ||
+        f.designation.toLowerCase().includes(lowerSearchTerm) ||
+        f.department.toLowerCase().includes(lowerSearchTerm)
+      );
+    }
+    setFilteredFaculties(items);
+  }, [faculties, searchTerm, selectedDepartment, selectedEmploymentType]);
+
   const handleAddFaculty = () => {
     setEditingFaculty(null);
-    form.reset({ // Reset with default structure including one qualification
+    form.reset({
       name: '',
       designation: '',
       department: '',
@@ -67,7 +112,6 @@ export default function FacultyPage() {
 
   const handleEditFaculty = (faculty: Faculty) => {
     setEditingFaculty(faculty);
-    // Ensure qualifications have unique IDs for useFieldArray if they don't already
     const qualificationsWithIds = faculty.qualifications.map(q => ({ ...q, id: q.id || crypto.randomUUID() }));
     form.reset({ ...faculty, qualifications: qualificationsWithIds });
     setIsFormOpen(true);
@@ -87,7 +131,6 @@ export default function FacultyPage() {
 
   const onSubmit = (data: FacultyFormData) => {
     if (editingFaculty) {
-      // Update existing faculty
       setFaculties(
         faculties.map((f) =>
           f.id === editingFaculty.id ? { ...editingFaculty, ...data, qualifications: data.qualifications as Qualification[] } : f
@@ -95,17 +138,22 @@ export default function FacultyPage() {
       );
       toast({ title: "Faculty Updated", description: `${data.name} has been successfully updated.` });
     } else {
-      // Add new faculty
       const newFaculty: Faculty = {
         id: crypto.randomUUID(),
         ...data,
         qualifications: data.qualifications as Qualification[],
       };
-      setFaculties([...faculties, newFaculty]);
+      setFaculties([newFaculty, ...faculties].sort((a, b) => a.name.localeCompare(b.name))); // Add and sort
       toast({ title: "Faculty Added", description: `${data.name} has been successfully added.` });
     }
     setIsFormOpen(false);
     form.reset();
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setSelectedDepartment('');
+    setSelectedEmploymentType('');
   };
 
   return (
@@ -120,8 +168,58 @@ export default function FacultyPage() {
           </Button>
         }
       />
+
+      <div className="mb-6 mt-4 p-6 bg-card rounded-lg shadow">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-6 items-end">
+          <div className="lg:col-span-2">
+            <Label htmlFor="facultySearch" className="text-sm font-medium">Search Faculty</Label>
+            <Input
+              id="facultySearch"
+              placeholder="Search by name, designation, department..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="departmentFilter" className="text-sm font-medium">Department</Label>
+            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+              <SelectTrigger id="departmentFilter" className="mt-1">
+                <SelectValue placeholder="All Departments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Departments</SelectItem>
+                {uniqueDepartments.map(dept => (
+                  <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="employmentTypeFilter" className="text-sm font-medium">Employment Type</Label>
+            <Select value={selectedEmploymentType} onValueChange={(value) => setSelectedEmploymentType(value as Faculty['employmentType'] | '')}>
+              <SelectTrigger id="employmentTypeFilter" className="mt-1">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Types</SelectItem>
+                {employmentTypes.map(type => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {(searchTerm || selectedDepartment || selectedEmploymentType) && (
+             <Button variant="outline" onClick={handleClearFilters} className="w-full lg:w-auto mt-4 lg:mt-0">
+                <XCircle className="mr-2 h-4 w-4" />
+                Clear Filters
+            </Button>
+          )}
+        </div>
+      </div>
+
       <FacultyTable
-        faculties={faculties}
+        faculties={filteredFaculties}
         onEdit={handleEditFaculty}
         onDelete={handleDeleteFaculty}
       />
