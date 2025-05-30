@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Eye, Mail, MailOpen } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 interface InquiryTableProps {
   inquiries: Inquiry[];
